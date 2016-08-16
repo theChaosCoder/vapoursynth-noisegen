@@ -55,8 +55,8 @@ typedef struct NoiseData
     size_t noiseBufferStartRowSize;
     std::vector<int> noiseBufferStartRow[3];
 
-    float pixelMax[3];
-    float pixelMin[3];
+    double pixelMax[3];
+    double pixelMin[3];
 } NoiseData;
 
 
@@ -345,7 +345,7 @@ static void VS_CC noiseCreate(const VSMap *in, VSMap *out, void *userData, VSCor
             throw std::string("str must be 0.0 ... 128.0");
 
 
-        d->type = vsapi->propGetInt(in, "type", 0, &err);
+        d->type = int64ToIntS(vsapi->propGetInt(in, "type", 0, &err));
         if (err) d->type = NoiseTypeNormal;
 
         if (d->type < 1 || d->type > 2)
@@ -360,10 +360,10 @@ static void VS_CC noiseCreate(const VSMap *in, VSMap *out, void *userData, VSCor
         if (d->var <= 0.001)
             throw std::string("var must be larger than 0.001");
 
-        d->dyn = !!vsapi->propGetInt(in, "dyn", 0, &err);
+        d->dyn = !!int64ToIntS(vsapi->propGetInt(in, "dyn", 0, &err));
         if (err) d->dyn = true;
 
-        d->full = !!vsapi->propGetInt(in, "full", 0, &err);
+        d->full = !!int64ToIntS(vsapi->propGetInt(in, "full", 0, &err));
         if (err) d->full = false;
         if (d->vi->format->colorFamily == cmRGB) // always set true for RGB
             d->full = true;
@@ -381,7 +381,7 @@ static void VS_CC noiseCreate(const VSMap *in, VSMap *out, void *userData, VSCor
             }
         } else {
             for (int i = 0; i < m; ++i) {
-                int p = vsapi->propGetInt(in, "planes", i, &err);
+                int p = int64ToIntS(vsapi->propGetInt(in, "planes", i, &err));
                 if (p < 0 || p > d->vi->format->numPlanes - 1)
                     throw std::string("planes index out of bound");
                 d->planes[p] = true;
@@ -424,7 +424,7 @@ static void VS_CC noiseCreate(const VSMap *in, VSMap *out, void *userData, VSCor
 
     /* adjust str and limit for different sample type and bits */
     if (d->vi->format->sampleType == stInteger) {
-        int64_t scale = 1 << (d->vi->format->bitsPerSample - 8);
+        double scale = 1 << (d->vi->format->bitsPerSample - 8);
         d->str *= scale;
         d->limit *= scale;
     } else {
